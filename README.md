@@ -8,20 +8,20 @@ backend mail container. It does **no local delivery**.
 > This image is a Postfix relay. Despite an earlier mislabeled registry repo
 > (`postgres`), it has nothing to do with PostgreSQL.
 
-## What it routes
+## What it routes (current deployment)
 
 | Recipient domain               | Backend transport        |
 |--------------------------------|--------------------------|
 | `rootsofthevalley.org`         | `smtp:[10.89.1.10]:25`   |
 | `newsletter.crunchtools.com`   | `smtp:[10.89.1.11]:25`   |
 
-Routing lives in [`config/transport`](config/transport); relay policy and TLS
-settings live in [`config/main.cf`](config/main.cf).
-
 ## Design
 
-The image is generic: routing config and TLS material are **mounted at runtime**,
-not baked in.
+The image is **generic and carries no deployment config**. Routing
+(`main.cf`, `transport`) and TLS material are **mounted at runtime**, not baked
+in. The live, version-controlled config for `mail.crunchtools.com` lives in the
+private host repo (`fatherlinux/lotor.dc3.crunchtools.com-srv`) under
+`mail.crunchtools.com/config/`, alongside every other service on that host.
 
 | Mount              | Container path        | Purpose                          |
 |--------------------|-----------------------|----------------------------------|
