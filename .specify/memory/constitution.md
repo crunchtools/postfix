@@ -64,7 +64,9 @@ postfix
 - **Build test**: CI builds the image from the Containerfile on every push and
   pull request to main/master.
 - **Smoke test**: Container starts and `postfix start-fg` reaches a running
-  state with the example `config/` mounted (verified before release).
+  state with a `main.cf`/`transport` and TLS cert/key mounted (verified before
+  release). The image carries no deployment config; per-host config is
+  version-controlled in the private host repo.
 - **Security scan**: Recommended (Trivy or equivalent), not yet wired into CI.
 
 ## Quality Gates
