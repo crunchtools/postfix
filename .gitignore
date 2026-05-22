@@ -1,0 +1,6 @@
+.claude/
+
+# TLS material is provisioned on the host and mounted at runtime — never commit.
+*.crt
+*.key
+*.pem

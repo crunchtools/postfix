@@ -1,0 +1,34 @@
+# mail.crunchtools.com — front-door SMTP router
+# Accepts inbound mail on :25 and relays by recipient domain to backend containers.
+myhostname = mail.crunchtools.com
+mydomain = crunchtools.com
+myorigin = $myhostname
+
+inet_interfaces = all
+inet_protocols = ipv4
+
+# No local delivery — this host only relays to backends.
+mydestination =
+local_transport = error:local delivery disabled
+local_recipient_maps =
+alias_maps =
+alias_database =
+
+# Only these domains are accepted for relay; everything else is rejected.
+relay_domains = rootsofthevalley.org, newsletter.crunchtools.com
+transport_maps = lmdb:/etc/postfix/transport
+
+# Trust only loopback for origin; inbound to relay_domains is allowed via
+# reject_unauth_destination (relay_domains count as authorized destinations).
+mynetworks = 127.0.0.0/8, [::1]/128
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+
+# Opportunistic STARTTLS for inbound senders.
+smtpd_tls_cert_file = /tls/smtp.crt
+smtpd_tls_key_file = /tls/smtp.key
+smtpd_tls_security_level = may
+smtpd_tls_loglevel = 1
+
+message_size_limit = 26214400
+maillog_file = /dev/stdout
