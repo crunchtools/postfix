@@ -3,6 +3,7 @@ name: Build and Push Container Image
 on:
   push:
     branches: [main, master]
+    tags: ["v*"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -42,6 +43,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=
+            type=semver,pattern={{version}}
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -108,6 +110,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=
+            type=semver,pattern={{version}}
 
       - name: Build and push container image
         uses: docker/build-push-action@v6
