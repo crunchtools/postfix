@@ -10,10 +10,13 @@ backend mail container. It does **no local delivery**.
 
 ## What it routes (current deployment)
 
-| Recipient domain               | Backend transport        |
-|--------------------------------|--------------------------|
-| `rootsofthevalley.org`         | `smtp:[10.89.1.x]:25`   |
-| `newsletter.crunchtools.com`   | `smtp:[10.89.1.x]:25`   |
+| Recipient domain               | Backend transport             |
+|--------------------------------|--------------------------------|
+| `rootsofthevalley.org`         | `smtp:[<backend-container-ip>]:25` |
+| `newsletter.crunchtools.com`   | `smtp:[<backend-container-ip>]:25` |
+
+The real transport map (with actual backend IPs) lives with the rest of the
+private deployment config, not in this repo — see Design below.
 
 ## Design
 
@@ -47,7 +50,7 @@ rebuild picks up base image security updates.
 
 ```bash
 podman run -d --name mail.crunchtools.com --hostname mail.crunchtools.com \
-  --network mail:ip=10.89.1.x -p 0.0.0.0:25:25 --memory=512m \
+  --network mail:ip=<container-ip> -p 0.0.0.0:25:25 --memory=512m \
   -v /srv/mail.crunchtools.com/config/main.cf:/conf/main.cf:ro,Z \
   -v /srv/mail.crunchtools.com/config/transport:/conf/transport:ro,Z \
   -v /srv/mail.crunchtools.com/config/smtp.crt:/tls/smtp.crt:ro,Z \
