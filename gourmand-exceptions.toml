@@ -1,0 +1,6 @@
+[[exceptions]]
+check = "random_scripts"
+path = "entrypoint.sh"
+justification = "Container entrypoint COPYed and set as ENTRYPOINT by Containerfile; documented in README.md and the repo constitution"
+classification = "by_design"
+
