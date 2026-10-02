@@ -1,80 +1,63 @@
 # postfix Constitution
 
-> **Version:** 1.0.0
+> **Version:** 1.1.0
 > **Ratified:** 2026-05-21
+> **Amended:** 2026-10-02
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.17.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.18.0
 > **Profile:** Container Image
 
-UBI 10 Postfix SMTP router. Runs Postfix in the foreground as a front-door relay:
-it accepts inbound mail on port 25 and forwards each message, by recipient domain,
-to the appropriate backend mail container. It performs **no local delivery** — it
-is purely a routing/relay tier. Deployed as `mail.crunchtools.com` on lotor.
+This file holds what is specific to postfix. The fleet rules and the Container
+Image profile (license, versioning, LABELs, the RHSM secret-mount pattern,
+systemd conventions, registry, testing and quality gates) apply at the
+inherited version and are checked against this repo's files by
+`constitution.yml`. They are not restated here.
 
----
+## Purpose
 
-## License
+UBI 10 Postfix SMTP router, deployed as `mail.crunchtools.com`. A front-door
+relay: it accepts inbound mail on port 25 and forwards each message, by
+recipient domain, to the backend mail container for that domain. It performs
+**no local delivery**. Published as `quay.io/crunchtools/postfix`. Despite an
+earlier mislabeled registry repo (`postgres`), it has nothing to do with
+PostgreSQL.
 
-AGPL-3.0-or-later
+## Parent Image
 
-## Versioning
+`registry.access.redhat.com/ubi10/ubi-minimal:latest`. Postfix is a single
+foreground process, so the image needs neither systemd nor `ubi-init`, and is
+not part of the ubi10-core cascade. `postfix` comes from
+`ubi-10-appstream-rpms`; no RHSM registration. ubi-minimal ships `microdnf`,
+so packages install with `microdnf install` / `microdnf clean all` rather
+than `dnf`.
 
-Follow Semantic Versioning 2.0.0 (MAJOR.MINOR.PATCH). MAJOR for incompatible
-routing/behavior changes, MINOR for backwards-compatible capability additions,
-PATCH for fixes.
+## Packages and Services
 
-## Base Image
+- **Packages:** postfix.
+- **Port:** 25 (`EXPOSE 25`).
+- **Entrypoint:** `/entrypoint.sh`, not `/sbin/init`.
 
-`registry.access.redhat.com/ubi10/ubi-minimal:latest` — single foreground
-service (Postfix), so no systemd/`ubi-init` is required. Postfix is installed
-from `ubi-10-appstream-rpms`, which is available in UBI without RHSM
-registration.
+## Runtime Configuration
 
-## Registry
+The image is generic and carries no deployment config. Routing and TLS are
+mounted at runtime, never baked in:
 
-Published to `quay.io/crunchtools/postfix`.
+| Mount | Container path | Purpose |
+|-------|----------------|---------|
+| `main.cf` | `/conf/main.cf` | Postfix relay configuration |
+| `transport` | `/conf/transport` | Domain-to-backend routing map |
+| `smtp.crt` | `/tls/smtp.crt` | STARTTLS certificate |
+| `smtp.key` | `/tls/smtp.key` | STARTTLS private key |
 
-- `latest` — most recent build from the default branch
-- `<sha>` — git commit SHA for traceability
+`entrypoint.sh` copies the mounted config into `/etc/postfix`, runs
+`postmap lmdb:` on the transport map (UBI's postfix ships the lmdb map type,
+not Berkeley DB hash), runs a non-fatal `postfix check` to repair spool
+permissions, then `exec`s `postfix start-fg`. The live config is
+version-controlled in a private host repo.
 
-## RHSM Registration
+## History
 
-Not required. The only package installed (`postfix`) ships in the UBI AppStream
-repository, so no build-time `subscription-manager` registration is used.
-
-## Containerfile Conventions
-
-- Uses `Containerfile` (not Dockerfile)
-- Required LABELs: `maintainer`, `description`, plus OCI labels
-  (`org.opencontainers.image.source`, `.description`, `.licenses`)
-- `microdnf install -y postfix` followed by `microdnf clean all` (ubi-minimal
-  ships `microdnf`, not full `dnf`)
-- Routing config (`main.cf`, `transport`) and TLS material are **mounted at
-  runtime** under `/conf` and `/tls`, never baked into the image
-- `EXPOSE 25`
-- `ENTRYPOINT ["/entrypoint.sh"]` — applies mounted config, runs `postmap`,
-  then `exec /usr/sbin/postfix start-fg`
-
-## Packages Installed
-
-postfix
-
-## Testing
-
-- **Build test**: CI builds the image from the Containerfile on every push and
-  pull request to main/master.
-- **Smoke test**: Container starts and `postfix start-fg` reaches a running
-  state with a `main.cf`/`transport` and TLS cert/key mounted (verified before
-  release). The image carries no deployment config; per-host config is
-  version-controlled in the private host repo.
-- **Security scan**: Recommended (Trivy or equivalent), not yet wired into CI.
-
-## Quality Gates
-
-1. **Build** — CI builds the Containerfile successfully (`podman build -f Containerfile .`).
-2. **Constitution validation** — `validate-constitution.py` passes against this document.
-3. **Smoke test** — `postfix check` succeeds and the router accepts SMTP on :25.
-4. **Weekly rebuild** — cron job rebuilds every Monday 06:00 UTC to pick up base
-   image security updates.
-
-All gates must pass before merge or push to the registry.
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2026-05-21 | Initial constitution-compliant postfix SMTP router |
+| 1.1.0 | 2026-10-02 | Manifest under constitution v1.18.0: profile restatement removed, image specifics kept |
