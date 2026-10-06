@@ -4,7 +4,7 @@
 > **Ratified:** 2026-05-21
 > **Amended:** 2026-10-02
 > **Status:** Active
-> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.18.0
+> **Inherits:** [crunchtools/constitution](https://github.com/crunchtools/constitution) v1.20.0
 > **Profile:** Container Image
 
 This file holds what is specific to postfix. The fleet rules and the Container
