@@ -157,8 +157,15 @@ new_queue_id() {
     return 1
 }
 
-signature_of() {
-    podman exec "$CTR" postcat -q "$1" | grep '^DKIM-Signature:' || true
+# Echo the queued message. Kept separate from the grep so that a postcat
+# failure fails the test, rather than reading as "no signature" and letting the
+# negative assertions below pass without having looked at anything.
+message_of() {
+    podman exec "$CTR" postcat -q "$1"
+}
+
+signature_in() {
+    printf '%s\n' "$1" | grep '^DKIM-Signature:' || true
 }
 
 # --- 2. a listed client, a listed domain: signed ---------------------------
@@ -166,9 +173,10 @@ podman exec "$CTR" /smtp-send.sh wordpress@crunchtools.com sink@boottest.invalid
     || { podman logs "$CTR" >&2; fail "relay rejected a message from a trusted client"; }
 
 QID="$(new_queue_id)" || { podman logs "$CTR" >&2; fail "message never reached the queue"; }
-SIG="$(signature_of "$QID")"
+MSG="$(message_of "$QID")" || fail "could not read queued message $QID"
+SIG="$(signature_in "$MSG")"
 [ -n "$SIG" ] \
-    || { podman exec "$CTR" postcat -q "$QID" >&2; podman logs "$CTR" >&2; \
+    || { echo "$MSG" >&2; podman logs "$CTR" >&2; \
          fail "message from a trusted client was not signed"; }
 case "$SIG" in
     *d=crunchtools.com*) ;;
@@ -180,7 +188,8 @@ podman exec "$CTR" /smtp-send.sh someone@elsewhere.invalid sink@boottest.invalid
     || fail "relay rejected the unsigned-domain test message"
 
 QID_DOMAIN="$(new_queue_id)" || fail "unsigned-domain message never reached the queue"
-[ -z "$(signature_of "$QID_DOMAIN")" ] \
+MSG_DOMAIN="$(message_of "$QID_DOMAIN")" || fail "could not read queued message $QID_DOMAIN"
+[ -z "$(signature_in "$MSG_DOMAIN")" ] \
     || fail "mail from a domain outside the signing table was signed"
 
 # --- 3b. a client outside InternalHosts: not signed ------------------------
@@ -196,7 +205,8 @@ with smtplib.SMTP("127.0.0.1", int(sys.argv[1]), timeout=30) as s:
 EOF
 
 QID_FORGED="$(new_queue_id)" || fail "untrusted-client message never reached the queue"
-[ -z "$(signature_of "$QID_FORGED")" ] \
+MSG_FORGED="$(message_of "$QID_FORGED")" || fail "could not read queued message $QID_FORGED"
+[ -z "$(signature_in "$MSG_FORGED")" ] \
     || fail "mail from a client outside InternalHosts was signed — forgery gate is open"
 
 echo "PASS: relay signs crunchtools.com for trusted clients, and signs nothing else"
