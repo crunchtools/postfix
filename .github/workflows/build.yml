@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
     branches: [main, master]
+  # Weekly rebuild for base image and EPEL security updates. This relay
+  # listens on :25 to the public internet, so it does not get to go stale
+  # between commits.
+  schedule:
+    - cron: "17 6 * * 1"
   workflow_dispatch:
 env:
   REGISTRY: quay.io
@@ -13,8 +18,30 @@ env:
   GHCR_IMAGE: ghcr.io/crunchtools/postfix
 
 jobs:
+  # The image runs two daemons (postfix and opendkim), which the container-image
+  # profile requires a boot test for. It builds with podman rather than reusing
+  # the buildx image below because the push jobs address the image by tag, and
+  # a gate has to run before anything is pushed. The double build costs about a
+  # minute; wiring the gate to the pushed digest instead is the promotion
+  # rework tracked separately.
+  boot-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build image for testing
+        run: podman build -f Containerfile -t localhost/postfix:boot-test .
+
+      - name: Boot test — postfix answers, opendkim signs, forgery gate closed
+        run: ./test/boot-test.sh localhost/postfix:boot-test
+
   build-and-push-quay:
     runs-on: ubuntu-latest
+    needs: boot-test
     permissions:
       contents: read
 
