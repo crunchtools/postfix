@@ -15,9 +15,11 @@ inherited version and are checked against this repo's files by
 
 ## Purpose
 
-UBI 10 Postfix SMTP router, deployed as `mail.crunchtools.com`. A front-door
-relay: it accepts inbound mail on port 25 and forwards each message, by
-recipient domain, to the backend mail container for that domain. It performs
+UBI 10 Postfix SMTP router with DKIM signing, deployed as
+`mail.crunchtools.com`. A front-door relay: it accepts inbound mail on port 25,
+signs outbound mail from our own domains with an `opendkim` milter, and forwards
+each message, by recipient domain, to the backend mail container for that
+domain. It performs
 **no local delivery**. Published as `quay.io/crunchtools/postfix`. Despite an
 earlier mislabeled registry repo (`postgres`), it has nothing to do with
 PostgreSQL.
