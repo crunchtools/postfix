@@ -108,10 +108,22 @@ podman run -d --name mail.crunchtools.com --hostname mail.crunchtools.com \
   -v /srv/mail.crunchtools.com/config/internalhosts:/conf/internalhosts:ro,Z \
   -v /srv/mail.crunchtools.com/config/dkim:/dkim:ro,Z \
   -v /dev/log:/dev/log \
-  quay.io/crunchtools/postfix:latest
+  quay.io/crunchtools/postfix:main
 ```
 
 Managed by the `mail.crunchtools.com.service` systemd unit on lotor.
+
+## Tags
+
+| Tag | What it is |
+|-----|------------|
+| `main` | The newest build of the default branch. **Use this one.** The weekly errata rebuild of `main` is how this image gets CVE fixes, and no release is ever cut, so it is the only tag that moves. |
+| `latest` | The newest stable release, per [constitution](https://github.com/crunchtools/constitution) 1.33.0. This repo has one release, `v1.0.0`, so `latest` is frozen there and will not pick up errata. Do not deploy it. |
+| `<sha>` | A specific commit, for pinning. |
+
+`latest` used to mean "the newest build of `main`". It stopped on 2026-11-07,
+after that reading put an unreleased build of another image into production
+unattended (RT#1559).
 
 ## Governance
 
