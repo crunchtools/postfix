@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-11
+
 ### Added
 - DKIM signing. An `opendkim` milter runs alongside postfix and signs outbound
   mail for the configured domains, so our notification mail is no longer
