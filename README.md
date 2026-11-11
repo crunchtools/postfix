@@ -86,9 +86,11 @@ signed when either gate says no. CI runs this before anything is pushed.
 podman build -f Containerfile -t quay.io/crunchtools/postfix:latest .
 ```
 
-CI (GitHub Actions) builds on every push/PR, runs the boot test, and pushes
-`latest` + the commit SHA to `quay.io/crunchtools/postfix` from the default
-branch. A weekly cron rebuild picks up base image and EPEL security updates.
+CI builds each pull request once, runs the boot test against the pushed
+digest, and on merge copies that tested digest to `main`; a `v*` tag copies it
+to the version tags and `latest` (constitution `container-release.yml`). A
+weekly rebuild, gated the same way, picks up base image and EPEL security
+updates.
 
 `opendkim` is not in any UBI 10 repository, so the build adds EPEL 10 — with
 its GPG key imported first, so the packages are verified.
@@ -117,9 +119,9 @@ Managed by the `mail.crunchtools.com.service` systemd unit on lotor.
 
 | Tag | What it is |
 |-----|------------|
-| `main` | The newest build of the default branch. **Use this one.** The weekly errata rebuild of `main` is how this image gets CVE fixes, and no release is ever cut, so it is the only tag that moves. |
-| `latest` | The newest stable release, per [constitution](https://github.com/crunchtools/constitution) 1.33.0. This repo has one release, `v1.0.0`, so `latest` is frozen there and will not pick up errata. Do not deploy it. |
-| `<sha>` | A specific commit, for pinning. |
+| `main` | The newest tested build of the default branch. **Use this one.** The weekly errata rebuild of `main` is how this image gets CVE fixes between releases. |
+| `latest` | The newest stable release, per [constitution](https://github.com/crunchtools/constitution) 1.33.0. It moves only when a `v*` tag is cut, so it lags `main` on errata. |
+| `sha-<sha>` | A specific commit's tested build, for pinning. |
 
 `latest` used to mean "the newest build of `main`". It stopped on 2026-11-07,
 after that reading put an unreleased build of another image into production
