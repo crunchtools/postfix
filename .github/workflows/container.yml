@@ -18,7 +18,7 @@ permissions: {}
 
 jobs:
   container:
-    uses: crunchtools/constitution/.github/workflows/container-release.yml@c50e48f8a6502674a66c412977be3c9e69ca4a8c
+    uses: crunchtools/constitution/.github/workflows/container-release.yml@v1.39.1
     permissions:
       contents: read
       pull-requests: read
@@ -28,7 +28,6 @@ jobs:
       # against the digest that will be promoted, not a separate test build.
       boot: command
       boot-command: ./test/boot-test.sh "$IMAGE"
-      constitution-ref: c50e48f8a6502674a66c412977be3c9e69ca4a8c
     secrets:
       QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
       QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
