@@ -1,0 +1,34 @@
+# Container release: build once per change, gate the digest, promote what was
+# tested (constitution III and Container Image VII). The merge to main does not
+# rebuild: it promotes the pull request's gated digest to :main, and a v* tag
+# copies main's digest to the version tags and :latest. Quay.io only.
+
+name: Container
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  schedule:
+    - cron: "17 6 * * 1"   # weekly: base-image errata, gated like any build
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  container:
+    uses: crunchtools/constitution/.github/workflows/container-release.yml@c50e48f8a6502674a66c412977be3c9e69ca4a8c
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      image: quay.io/crunchtools/postfix
+      # Postfix answers, opendkim signs, and the forgery gate stays closed --
+      # against the digest that will be promoted, not a separate test build.
+      boot: command
+      boot-command: ./test/boot-test.sh "$IMAGE"
+      constitution-ref: c50e48f8a6502674a66c412977be3c9e69ca4a8c
+    secrets:
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
