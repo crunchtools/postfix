@@ -20,6 +20,16 @@ RUN curl -fsSLo /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-10 https://dl.fedoraproject.or
     microdnf install -y opendkim opendkim-tools && \
     microdnf clean all
 
+# postfix 3.8.5-11 (RHEL 10.3) ships its spool as tmpfiles.d entries instead of
+# packaged directories. Nothing runs systemd-tmpfiles in this container, so
+# apply the package's own directory lines at build time and fail if the spool
+# still is not there.
+RUN awk '$1 == "d" { print $2, $3, $4, $5 }' /usr/lib/tmpfiles.d/postfix.conf | \
+    while read -r path mode user group; do \
+        install -d -m "$mode" -o "$user" -g "$group" "$path" || exit 1; \
+    done && \
+    test -d /var/spool/postfix/maildrop
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
