@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [1.0.1] - 2026-11-11
 
+### Fixed
+- The image boots on RHEL 10.3's postfix 3.8.5-11, which ships its spool as
+  tmpfiles.d entries rather than directories. The build now creates them, so
+  postfix no longer dies with `chdir(/var/spool/postfix)`.
+
 ### Added
 - DKIM signing. An `opendkim` milter runs alongside postfix and signs outbound
   mail for the configured domains, so our notification mail is no longer
