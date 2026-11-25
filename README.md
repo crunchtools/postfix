@@ -130,7 +130,7 @@ unattended (RT#1559).
 ## Governance
 
 This repo follows the [crunchtools constitution](https://github.com/crunchtools/constitution)
-**Container Image** profile. See [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+**Container Image** profile.
 
 ## License
 

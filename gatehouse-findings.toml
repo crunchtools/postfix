@@ -1,0 +1,9 @@
+# Gatehouse findings judged by hand; each carries its reason.
+
+[[findings]]
+agent = "bugs"
+category = "bug"
+file = "sdlc.toml"
+evidence = "[tool.sdlc.ci.postfix-image]\nkind = \"image-build\""
+status = "not-a-bug"
+reason = "publishing is unchanged: [tool.sdlc.image] drives the fleet ci.yml's image and promote jobs, which build, gate, sign and tag quay.io/crunchtools/postfix on main and releases; postfix-image is only the check job's local build for the boot-gate check."

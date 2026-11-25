@@ -1,2 +1,26 @@
 [tool.sdlc]
 repo-kinds = ["container-image"]
+
+[tool.sdlc.image]
+# Written by crunchtools/sdlc's scripts/convert_repo.py: moved from the workflows.
+image = "quay.io/crunchtools/postfix"
+# The old gate (test/boot-test.sh) drove podman from the host and sdlc does not
+# enforce boot = "command". Its assertions that can run without capabilities now
+# run inside the image the PR builds, as the boot-gate check below.
+boot = "none"
+boot-none-reason = "a relay needs a mounted /conf and the caps to bind :25 and sign mail; the postfix-image and boot-gate checks in [tool.sdlc.ci] run the image's assertions"
+
+[tool.sdlc.ci]
+checks = ["postfix-image", "boot-gate"]
+
+[tool.sdlc.ci.postfix-image]
+kind = "image-build"
+
+# Config, binaries and libraries checked in the built image; argv[0] replaces
+# the image's entrypoint. NOT covered until sdlc can gate with capabilities
+# (crunchtools/sdlc#118): postfix on :25, a trusted client's mail signed, and
+# the two forgery-gate cases. test/boot-test.sh still runs those by hand.
+[tool.sdlc.ci.boot-gate]
+kind = "command"
+image = "localhost/postfix:sdlc"
+argv = ["bash", "test/boot-check.sh"]
